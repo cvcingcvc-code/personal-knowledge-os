@@ -80,11 +80,18 @@ function fallbackIpv6(url) {
 async function probe(url) {
   let lastErr;
   const candidates = [url, fallbackIpv6(url)].filter(Boolean);
-  for (const c of candidates) {
-    try {
-      const res = await fetch(c, { redirect: 'manual' });
-      return { status: res.status, text: await res.text() };
-    } catch (e) { lastErr = e; }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    for (const c of candidates) {
+      try {
+        const res = await fetch(c, { redirect: 'manual' });
+        return { status: res.status, text: await res.text() };
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (attempt < 2) {
+      await new Promise((r) => setTimeout(r, 800));
+    }
   }
   return { status: 0, error: String(lastErr?.cause?.code || lastErr?.message || lastErr) };
 }

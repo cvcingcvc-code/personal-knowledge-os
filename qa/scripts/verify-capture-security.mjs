@@ -50,7 +50,21 @@ async function testOnlineCaptureHtml() {
   const hasRepoInput = html.includes('id="cfg-repo"') && html.includes('cvcingcvc-code/personal-knowledge-vault');
   console.log(`  [${hasRepoInput ? 'PASS' : 'FAIL'}] 默认目标私有仓库 (personal-knowledge-vault): ${hasRepoInput}`);
 
-  return hasRobots && hasPagefindIgnore && hasDualMode && hasTokenInput && hasRepoInput;
+  // Obsidian 专属特性核验
+  const hasDailyStream = html.includes('id="btn-quick-timestamp"') && html.includes('daily-stream-bar');
+  console.log(`  [${hasDailyStream ? 'PASS' : 'FAIL'}] Obsidian Daily Notes 流式速记控制栏 (btn-quick-timestamp): ${hasDailyStream}`);
+
+  const hasObsidianModes = html.includes('obsidian-editor-modes') && html.includes('data-mode="split"');
+  console.log(`  [${hasObsidianModes ? 'PASS' : 'FAIL'}] Obsidian 编辑/分屏/预览三视图模式切换: ${hasObsidianModes}`);
+
+  const hasPopover = html.includes('id="obsidian-popover"') && html.includes('id="popover-list"');
+  console.log(`  [${hasPopover ? 'PASS' : 'FAIL'}] Obsidian [[ 双链与 # 标签智能补全浮窗 (obsidian-popover): ${hasPopover}`);
+
+  const hasPreviewPane = html.includes('id="quick-preview-pane"') && html.includes('id="struct-preview-pane"');
+  console.log(`  [${hasPreviewPane ? 'PASS' : 'FAIL'}] Obsidian 实时 Markdown 预览双窗格: ${hasPreviewPane}`);
+
+  return hasRobots && hasPagefindIgnore && hasDualMode && hasTokenInput && hasRepoInput &&
+         hasDailyStream && hasObsidianModes && hasPopover && hasPreviewPane;
 }
 
 async function testPagefindIsolation() {
