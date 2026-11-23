@@ -148,6 +148,17 @@ import Base from "../layouts/Base.astro";
       aria-labelledby="tab-btn-quick"
       class="wb-card wb-panel"
     >
+      <!-- Obsidian 式今日流速记模式控制栏 -->
+      <div class="daily-stream-bar" aria-label="今日流式速记模式">
+        <div class="daily-stream-bar__left">
+          <strong>⏱️ 今日流速记 (Daily Notes)</strong>
+          <span class="wb-hint">免起标题 · 自动时间戳 · 随手即记</span>
+        </div>
+        <button type="button" class="daily-stream-btn" id="btn-quick-timestamp">
+          <span>+ 插入当前时刻</span>
+        </button>
+      </div>
+
       <div class="wb-field">
         <label class="wb-label" for="quick-title">标题（可选）</label>
         <input
@@ -160,16 +171,38 @@ import Base from "../layouts/Base.astro";
       </div>
 
       <div class="wb-field">
-        <div class="wb-label-row">
-          <label class="wb-label" for="quick-body">思考内容（支持 Markdown，L3 私密直存）</label>
-          <span class="wb-draft-note" id="quick-draft-note">草稿自动暂存本机</span>
+        <!-- Obsidian 沉浸式编辑器控制栏 -->
+        <div class="obsidian-editor-bar">
+          <div class="obsidian-editor-modes" role="group" aria-label="快速思考视图模式">
+            <button type="button" class="obsidian-mode-btn is-active" data-editor="quick" data-mode="edit">📝 编辑</button>
+            <button type="button" class="obsidian-mode-btn" data-editor="quick" data-mode="split">🌗 分屏</button>
+            <button type="button" class="obsidian-mode-btn" data-editor="quick" data-mode="preview">👁️ 预览</button>
+          </div>
+          <div class="obsidian-toolbar" data-editor="quick">
+            <button type="button" class="obsidian-tool-btn" data-tool="bold" title="粗体 (Ctrl+B)">B</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="italic" title="斜体 (Ctrl+I)">I</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="h2" title="二级标题">H2</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="quote" title="引用">&gt;</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="code" title="代码块">&lt;/&gt;</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="task" title="待办清单">- [ ]</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="wikilink" title="插入双向链接 [[">[[ ]]</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="tag" title="插入受控标签 #">#</button>
+          </div>
+          <div class="obsidian-meta-status">
+            <span class="obsidian-autosave-indicator" id="quick-autosave-indicator">● 草稿已暂存</span>
+            <span class="obsidian-word-count" id="quick-word-count">0 字</span>
+          </div>
         </div>
-        <textarea
-          id="quick-body"
-          class="wb-textarea wb-textarea--lg"
-          rows="8"
-          placeholder="随时记录灵光一现的思考、问题推演、阅读心得或当日原始复盘……"
-        ></textarea>
+
+        <div class="obsidian-editor-wrapper mode-edit" id="quick-editor-wrap">
+          <textarea
+            id="quick-body"
+            class="obsidian-textarea"
+            rows="9"
+            placeholder="随时记录灵光一现的思考、问题推演或当日流水…… 支持 [[双向链接 与 #标签 实时联想，Ctrl+Enter 保存"
+          ></textarea>
+          <div class="obsidian-preview-pane markdown-body" id="quick-preview-pane"></div>
+        </div>
       </div>
 
       <div class="wb-field">
@@ -517,15 +550,39 @@ import Base from "../layouts/Base.astro";
         </div>
       </fieldset>
 
-      <!-- 正文输入 -->
+      <!-- 正文输入（Obsidian 沉浸式编辑器） -->
       <div class="wb-field">
-        <label class="wb-label" for="st-body">正文内容（已脱敏 Markdown，建议不少于 80 字）</label>
-        <textarea
-          id="st-body"
-          class="wb-textarea wb-textarea--lg"
-          rows="8"
-          placeholder="在此撰写结构化正文（可使用 ## 二级标题组织背景、推导与结论；请确保不含未脱敏个人信息）……"
-        ></textarea>
+        <div class="obsidian-editor-bar">
+          <div class="obsidian-editor-modes" role="group" aria-label="结构化沉淀视图模式">
+            <button type="button" class="obsidian-mode-btn is-active" data-editor="struct" data-mode="edit">📝 编辑</button>
+            <button type="button" class="obsidian-mode-btn" data-editor="struct" data-mode="split">🌗 分屏</button>
+            <button type="button" class="obsidian-mode-btn" data-editor="struct" data-mode="preview">👁️ 预览</button>
+          </div>
+          <div class="obsidian-toolbar" data-editor="struct">
+            <button type="button" class="obsidian-tool-btn" data-tool="bold" title="粗体 (Ctrl+B)">B</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="italic" title="斜体 (Ctrl+I)">I</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="h2" title="二级标题">H2</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="quote" title="引用">&gt;</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="code" title="代码块">&lt;/&gt;</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="task" title="待办清单">- [ ]</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="wikilink" title="插入双向链接 [[">[[ ]]</button>
+            <button type="button" class="obsidian-tool-btn" data-tool="tag" title="插入受控标签 #">#</button>
+          </div>
+          <div class="obsidian-meta-status">
+            <span class="obsidian-autosave-indicator" id="struct-autosave-indicator">● 草稿已暂存</span>
+            <span class="obsidian-word-count" id="struct-word-count">0 字</span>
+          </div>
+        </div>
+
+        <div class="obsidian-editor-wrapper mode-edit" id="struct-editor-wrap">
+          <textarea
+            id="st-body"
+            class="obsidian-textarea"
+            rows="10"
+            placeholder="在此撰写结构化正文…… 输入 [[ 自动关联全库已有条目，输入 # 联想分类标签，Ctrl+Enter 存入草稿"
+          ></textarea>
+          <div class="obsidian-preview-pane markdown-body" id="struct-preview-pane"></div>
+        </div>
       </div>
 
       <!-- 前端实时 V-010 敏感信息拦截雷达 -->
@@ -567,12 +624,46 @@ import Base from "../layouts/Base.astro";
       <div class="wb-alert" id="struct-result" role="status" aria-live="polite" hidden></div>
     </section>
   </div>
+
+  <!-- Obsidian 浮动智能补全弹窗 (Wikilinks [[ 与 #Tags) -->
+  <div class="obsidian-popover" id="obsidian-popover" hidden>
+    <div class="obsidian-popover__head">
+      <span id="popover-tip">智能建议</span>
+      <span class="wb-hint">↑↓选择 · Enter/点击插入 · Esc关闭</span>
+    </div>
+    <ul class="obsidian-popover__list" id="popover-list" role="listbox"></ul>
+  </div>
 </Base>
 
 <script is:inline>
   (function () {
     var STORAGE_CONN_KEY = "pko_capture_conn_v1";
     var STORAGE_QUICK_KEY = "pko_capture_quick_draft_v1";
+    var STORAGE_STRUCT_KEY = "pko_capture_struct_draft_v1";
+
+    var CONTROLLED_TAGS_LIST = [
+      "git", "testing", "debugging", "ci-cd", "architecture", "typescript", "javascript", "python", "node", "sql",
+      "performance", "security", "refactoring", "tooling", "windows",
+      "requirement", "scope", "roadmap", "user-research", "tradeoff", "mvp",
+      "layout", "typography", "accessibility", "responsive", "color",
+      "metric", "visualization", "statistics", "data-modeling",
+      "budget", "investing", "pricing",
+      "english", "writing", "speaking", "vocabulary",
+      "sleep", "exercise", "energy",
+      "habit", "routine", "travel",
+      "learning", "review", "mental-model", "agent-collaboration", "decision-making", "note-taking",
+      "workflow", "documentation", "automation", "knowledge-base"
+    ];
+
+    var ALL_KNOWLEDGE_ENTRIES = [
+      { id: "KB-ENG-003", title: "工作区隔离与多 Agent 并行演进实践", type: "knowledge" },
+      { id: "KB-ENG-004", title: "双轨许可设计与代码内容权益隔离实践", type: "knowledge" },
+      { id: "KB-ENG-005", title: "低熵架构设计：契约冻结与防腐层实践", type: "knowledge" },
+      { id: "KB-ENG-006", title: "Astro 5 项目子路径部署与 Pagefind 归一化实践", type: "knowledge" },
+      { id: "PJ-PKOS", title: "Personal Knowledge OS 开源知识操作系统", type: "project" },
+      { id: "DJ-2026-11-18", title: "双库在线思考捕获架构演进复盘", type: "journal" },
+      { id: "ER-20261114-01", title: "隐私扫描与合成测试凭据零泄漏防御", type: "error" }
+    ];
 
     var DOMAIN_CODES = {
       engineering: "ENG",
@@ -715,6 +806,157 @@ import Base from "../layouts/Base.astro";
           return line.replace(/^\s*[-*•]\s*/, "").trim();
         })
         .filter(Boolean);
+    }
+
+    // ---- Obsidian 风格 Markdown 原生轻量渲染器 ----
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderMarkdown(src) {
+      if (!src || !src.trim()) {
+        return '<p class="wb-hint" style="font-style:italic;">暂无内容，在左侧输入以实时预览……</p>';
+      }
+      var lines = src.split(/\r?\n/);
+      var html = [];
+      var inCode = false;
+      var codeBuf = [];
+      var inList = false;
+      var listType = "ul";
+
+      function closeList() {
+        if (inList) {
+          html.push(listType === "ul" ? "</ul>" : "</ol>");
+          inList = false;
+        }
+      }
+
+      function inlineFormat(text) {
+        var escaped = escapeHtml(text);
+        // 1. Obsidian 双向链接 [[ID|Title]] 或 [[ID]]
+        escaped = escaped.replace(/\[\[([A-Za-z0-9-_]+)(?:\|([^\]]+))?\]\]/g, function (_, id, title) {
+          var display = title ? title.trim() : id;
+          return '<span class="obsidian-wikilink"><span class="wikilink-icon">🔗</span> <span class="wikilink-title">' +
+            display + '</span> <span class="wikilink-id">(' + id + ')</span></span>';
+        });
+        // 2. 标签 #tag-name
+        escaped = escaped.replace(/(^|\s)#([a-z0-9]+(?:-[a-z0-9]+)*)/gi, function (_, prefix, tag) {
+          return prefix + '<span class="obsidian-tag">#' + tag + '</span>';
+        });
+        // 3. 行内代码 `code`
+        escaped = escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
+        // 4. 粗体 **bold**
+        escaped = escaped.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        // 5. 斜体 *italic*
+        escaped = escaped.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+        // 6. 链接 [text](url)
+        escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, url) {
+          var safeUrl = url.trim();
+          if (/^(javascript:|data:)/i.test(safeUrl)) safeUrl = "#";
+          return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer">' + label + "</a>";
+        });
+        return escaped;
+      }
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+
+        // 代码块判定 ```
+        if (/^```(\w*)/.test(line)) {
+          if (inCode) {
+            html.push("<pre><code>" + escapeHtml(codeBuf.join("\n")) + "</code></pre>");
+            codeBuf = [];
+            inCode = false;
+          } else {
+            closeList();
+            inCode = true;
+          }
+          continue;
+        }
+        if (inCode) {
+          codeBuf.push(line);
+          continue;
+        }
+
+        // 空行
+        if (!line.trim()) {
+          closeList();
+          continue;
+        }
+
+        // 标题 # .. ######
+        var headMatch = line.match(/^(#{1,6})\s+(.*)$/);
+        if (headMatch) {
+          closeList();
+          var level = headMatch[1].length;
+          html.push("<h" + level + ">" + inlineFormat(headMatch[2]) + "</h" + level + ">");
+          continue;
+        }
+
+        // 引用 >
+        var quoteMatch = line.match(/^>\s?(.*)$/);
+        if (quoteMatch) {
+          closeList();
+          html.push("<blockquote>" + inlineFormat(quoteMatch[1]) + "</blockquote>");
+          continue;
+        }
+
+        // 待办清单 - [ ] 或 - [x]
+        var taskMatch = line.match(/^[-*]\s+\[([ xX])\]\s+(.*)$/);
+        if (taskMatch) {
+          if (!inList || listType !== "ul") {
+            closeList();
+            html.push('<ul class="obsidian-task-list" style="list-style:none;padding-left:0;">');
+            inList = true;
+            listType = "ul";
+          }
+          var checked = taskMatch[1].toLowerCase() === "x" ? "checked disabled" : "disabled";
+          html.push('<li><input type="checkbox" ' + checked + " /> " + inlineFormat(taskMatch[2]) + "</li>");
+          continue;
+        }
+
+        // 无序列表 - 或 *
+        var ulMatch = line.match(/^[-*]\s+(.*)$/);
+        if (ulMatch) {
+          if (!inList || listType !== "ul") {
+            closeList();
+            html.push("<ul>");
+            inList = true;
+            listType = "ul";
+          }
+          html.push("<li>" + inlineFormat(ulMatch[1]) + "</li>");
+          continue;
+        }
+
+        // 有序列表 1. 2.
+        var olMatch = line.match(/^(\d+)\.\s+(.*)$/);
+        if (olMatch) {
+          if (!inList || listType !== "ol") {
+            closeList();
+            html.push("<ol>");
+            inList = true;
+            listType = "ol";
+          }
+          html.push("<li>" + inlineFormat(olMatch[2]) + "</li>");
+          continue;
+        }
+
+        // 普通段落
+        closeList();
+        html.push("<p>" + inlineFormat(line) + "</p>");
+      }
+
+      closeList();
+      if (inCode) {
+        html.push("<pre><code>" + escapeHtml(codeBuf.join("\n")) + "</code></pre>");
+      }
+
+      return html.join("\n");
     }
 
     function yamlStr(val) {
@@ -1016,6 +1258,22 @@ import Base from "../layouts/Base.astro";
     var btnClearQuick = byId("btn-clear-quick");
     var quickResult = byId("quick-result");
 
+    // Obsidian 增强组件引用
+    var btnQuickTimestamp = byId("btn-quick-timestamp");
+    var quickPreviewPane = byId("quick-preview-pane");
+    var quickWordCount = byId("quick-word-count");
+    var quickAutosaveIndicator = byId("quick-autosave-indicator");
+    var quickEditorWrap = byId("quick-editor-wrap");
+
+    var structPreviewPane = byId("struct-preview-pane");
+    var structWordCount = byId("struct-word-count");
+    var structAutosaveIndicator = byId("struct-autosave-indicator");
+    var structEditorWrap = byId("struct-editor-wrap");
+
+    var obsidianPopover = byId("obsidian-popover");
+    var popoverList = byId("popover-list");
+    var popoverTip = byId("popover-tip");
+
     function computeQuickMeta(now) {
       var dt = now || new Date();
       var year = String(dt.getFullYear());
@@ -1037,19 +1295,31 @@ import Base from "../layouts/Base.astro";
     function updateQuickPreviewAndCache(saveDraft) {
       var meta = computeQuickMeta(new Date());
       if (quickPathPreview) quickPathPreview.textContent = meta.path;
+      var text = (quickBody && quickBody.value) || "";
+      if (quickPreviewPane) {
+        quickPreviewPane.innerHTML = renderMarkdown(text);
+      }
+      if (quickWordCount) {
+        quickWordCount.textContent = text.trim().length + " 字";
+      }
+
       if (saveDraft) {
         try {
           localStorage.setItem(
             STORAGE_QUICK_KEY,
             JSON.stringify({
               title: (quickTitle && quickTitle.value) || "",
-              body: (quickBody && quickBody.value) || "",
+              body: text,
               tags: (quickTags && quickTags.value) || "",
             })
           );
+          var timeStr = pad2(meta.dt.getHours()) + ":" + pad2(meta.dt.getMinutes());
           if (quickDraftNote) {
-            quickDraftNote.textContent =
-              "本地草稿已暂存（" + pad2(meta.dt.getHours()) + ":" + pad2(meta.dt.getMinutes()) + "）";
+            quickDraftNote.textContent = "本地草稿已暂存（" + timeStr + "）";
+          }
+          if (quickAutosaveIndicator) {
+            quickAutosaveIndicator.textContent = "● 草稿已暂存 (" + timeStr + ")";
+            quickAutosaveIndicator.classList.add("is-saved");
           }
         } catch (_e) {}
       }
@@ -1077,6 +1347,27 @@ import Base from "../layouts/Base.astro";
         updateQuickPreviewAndCache(true);
       });
     });
+
+    if (btnQuickTimestamp) {
+      btnQuickTimestamp.addEventListener("click", function () {
+        var now = new Date();
+        var timeStr = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+        if (quickTitle && !quickTitle.value.trim()) {
+          quickTitle.value = localDateISO(now) + " 闪念";
+        }
+        var stamp = "\n\n### " + timeStr + "\n\n- ";
+        if (quickBody) {
+          if (!quickBody.value.trim()) {
+            quickBody.value = "### " + timeStr + "\n\n- ";
+          } else {
+            quickBody.value = quickBody.value.replace(/\s*$/, "") + stamp;
+          }
+          quickBody.focus();
+          quickBody.setSelectionRange(quickBody.value.length, quickBody.value.length);
+        }
+        updateQuickPreviewAndCache(true);
+      });
+    }
 
     if (btnClearQuick) {
       btnClearQuick.addEventListener("click", function () {
@@ -1534,6 +1825,37 @@ import Base from "../layouts/Base.astro";
         stMdPreview.textContent = art.markdown;
       }
 
+      // Obsidian 实时 Markdown 预览与字数统计
+      var rawBody = (stBody && stBody.value) || "";
+      if (structPreviewPane) {
+        structPreviewPane.innerHTML = renderMarkdown(rawBody);
+      }
+      if (structWordCount) {
+        structWordCount.textContent = rawBody.trim().length + " 字";
+      }
+
+      // 本地草稿自动保存
+      try {
+        localStorage.setItem(
+          STORAGE_STRUCT_KEY,
+          JSON.stringify({
+            type: (stType && stType.value) || "knowledge",
+            id: (stId && stId.value) || "",
+            slug: (stSlug && stSlug.value) || "",
+            title: (stTitle && stTitle.value) || "",
+            summary: (stSummary && stSummary.value) || "",
+            tags: (stTags && stTags.value) || "",
+            body: rawBody,
+          })
+        );
+        var now = new Date();
+        var timeStr = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+        if (structAutosaveIndicator) {
+          structAutosaveIndicator.textContent = "● 草稿已暂存 (" + timeStr + ")";
+          structAutosaveIndicator.classList.add("is-saved");
+        }
+      } catch (_e) {}
+
       // 更新 V-010 实时雷达
       if (art.v010Hits.length > 0) {
         v010Blocked = true;
@@ -1777,9 +2099,369 @@ import Base from "../layouts/Base.astro";
       });
     }
 
+    // ---- 异步加载全库条目以供 [[ 双链智能联想 ----
+    async function loadKnowledgeEntries() {
+      try {
+        var base = "/personal-knowledge-os/";
+        var res = await fetch(base + "data/content.json");
+        if (res.ok) {
+          var data = await res.json();
+          if (data && Array.isArray(data.items)) {
+            ALL_KNOWLEDGE_ENTRIES = data.items.map(function (it) {
+              return {
+                id: it.id,
+                title: it.title || it.id,
+                type: it.type,
+                path: it.path || "",
+              };
+            });
+          }
+        }
+      } catch (_e) {}
+    }
+
+    // 恢复结构化草稿
+    function loadStructDraft() {
+      try {
+        var raw = localStorage.getItem(STORAGE_STRUCT_KEY);
+        if (!raw) return;
+        var d = JSON.parse(raw);
+        if (d && typeof d === "object") {
+          if (d.title && stTitle && !stTitle.value.trim()) stTitle.value = String(d.title);
+          if (d.summary && stSummary && !stSummary.value.trim()) stSummary.value = String(d.summary);
+          if (d.tags && stTags && !stTags.value.trim()) stTags.value = String(d.tags);
+          if (d.body && stBody && !stBody.value.trim()) stBody.value = String(d.body);
+          if (d.id && stId && !stId.value.trim()) stId.value = String(d.id);
+          if (d.slug && stSlug && !stSlug.value.trim()) stSlug.value = String(d.slug);
+        }
+      } catch (_e) {}
+    }
+
+    // ---- 选中文本包裹与插入辅助 ----
+    function wrapSelection(textarea, before, after, defaultText) {
+      if (!textarea) return;
+      var start = textarea.selectionStart;
+      var end = textarea.selectionEnd;
+      var val = textarea.value;
+      var selected = val.substring(start, end) || defaultText || "";
+      var replacement = before + selected + after;
+      textarea.value = val.substring(0, start) + replacement + val.substring(end);
+      textarea.focus();
+      textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+    }
+
+    function insertLinePrefix(textarea, prefix) {
+      if (!textarea) return;
+      var start = textarea.selectionStart;
+      var val = textarea.value;
+      var lineStart = val.lastIndexOf("\n", start - 1) + 1;
+      textarea.value = val.substring(0, lineStart) + prefix + val.substring(lineStart);
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length);
+    }
+
+    // ---- Obsidian 视图模式切换与工具栏绑定 ----
+    function setupEditorModes(editorName, wrapperEl, onUpdate) {
+      var btns = document.querySelectorAll('.obsidian-mode-btn[data-editor="' + editorName + '"]');
+      btns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var mode = btn.getAttribute("data-mode") || "edit";
+          btns.forEach(function (b) {
+            b.classList.toggle("is-active", b === btn);
+          });
+          if (wrapperEl) {
+            wrapperEl.className = "obsidian-editor-wrapper mode-" + mode;
+          }
+          if (typeof onUpdate === "function") onUpdate();
+        });
+      });
+    }
+
+    function setupEditorToolbar(editorName, textareaEl, onUpdate) {
+      var toolbar = document.querySelector('.obsidian-toolbar[data-editor="' + editorName + '"]');
+      if (!toolbar) return;
+      toolbar.addEventListener("click", function (e) {
+        var btn = e.target.closest("[data-tool]");
+        if (!btn) return;
+        var tool = btn.getAttribute("data-tool");
+        switch (tool) {
+          case "bold":
+            wrapSelection(textareaEl, "**", "**", "加粗文本");
+            break;
+          case "italic":
+            wrapSelection(textareaEl, "*", "*", "斜体文本");
+            break;
+          case "h2":
+            insertLinePrefix(textareaEl, "## ");
+            break;
+          case "quote":
+            insertLinePrefix(textareaEl, "> ");
+            break;
+          case "code":
+            wrapSelection(textareaEl, "```\n", "\n```", "代码块");
+            break;
+          case "task":
+            insertLinePrefix(textareaEl, "- [ ] ");
+            break;
+          case "wikilink":
+            wrapSelection(textareaEl, "[[", "]]", "条目ID|标题");
+            break;
+          case "tag":
+            wrapSelection(textareaEl, "#", " ", "tag");
+            break;
+        }
+        if (typeof onUpdate === "function") onUpdate();
+      });
+    }
+
+    // ---- Obsidian 浮动智能补全系统 ([[双链与 #标签) ----
+    var activeAutocomplete = null;
+
+    function hidePopover() {
+      if (obsidianPopover) obsidianPopover.hidden = true;
+      activeAutocomplete = null;
+    }
+
+    function renderPopoverItems() {
+      if (!popoverList || !activeAutocomplete) return;
+      popoverList.innerHTML = "";
+      var items = activeAutocomplete.items;
+      if (items.length === 0) {
+        var emptyLi = document.createElement("li");
+        emptyLi.className = "obsidian-popover__item";
+        emptyLi.innerHTML = '<span class="wb-hint">未找到匹配项</span>';
+        popoverList.appendChild(emptyLi);
+        return;
+      }
+
+      items.forEach(function (item, idx) {
+        var li = document.createElement("li");
+        li.className = "obsidian-popover__item" + (idx === activeAutocomplete.selectedIndex ? " is-selected" : "");
+        li.setAttribute("role", "option");
+        li.setAttribute("aria-selected", idx === activeAutocomplete.selectedIndex ? "true" : "false");
+
+        if (activeAutocomplete.type === "wikilink") {
+          var titleDiv = document.createElement("div");
+          titleDiv.className = "obsidian-popover__title";
+          titleDiv.textContent = item.title;
+          var metaDiv = document.createElement("div");
+          metaDiv.className = "obsidian-popover__meta";
+          metaDiv.innerHTML = "<span>" + item.id + "</span><span>·</span><span>" + item.type + "</span>";
+          li.appendChild(titleDiv);
+          li.appendChild(metaDiv);
+        } else {
+          var tagSpan = document.createElement("span");
+          tagSpan.className = "obsidian-tag";
+          tagSpan.textContent = "#" + item;
+          li.appendChild(tagSpan);
+        }
+
+        li.addEventListener("mousedown", function (e) {
+          e.preventDefault();
+          selectAutocompleteItem(idx);
+        });
+
+        popoverList.appendChild(li);
+      });
+    }
+
+    function selectAutocompleteItem(idx) {
+      if (!activeAutocomplete) return;
+      var item = activeAutocomplete.items[idx];
+      if (!item) return;
+      var ta = activeAutocomplete.textarea;
+      var cursor = ta.selectionStart;
+      var before = ta.value.substring(0, activeAutocomplete.triggerIndex);
+      var after = ta.value.substring(cursor);
+
+      if (activeAutocomplete.type === "wikilink") {
+        var insertStr = "[[" + item.id + "|" + item.title + "]]";
+        if (after.indexOf("]]") === 0) after = after.substring(2);
+        ta.value = before + insertStr + after;
+        ta.focus();
+        ta.setSelectionRange(before.length + insertStr.length, before.length + insertStr.length);
+      } else if (activeAutocomplete.type === "tag") {
+        var tagStr = "#" + item + " ";
+        ta.value = before + tagStr + after;
+        ta.focus();
+        ta.setSelectionRange(before.length + tagStr.length, before.length + tagStr.length);
+      }
+
+      hidePopover();
+      ta.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    function checkAutocompleteTrigger(ta) {
+      var cursor = ta.selectionStart;
+      var textBefore = ta.value.substring(0, cursor);
+
+      // 检测双链 [[
+      var wikiMatch = textBefore.match(/\[\[([^\]\n]*)$/);
+      if (wikiMatch) {
+        var query = wikiMatch[1].trim().toLowerCase();
+        var matches = ALL_KNOWLEDGE_ENTRIES.filter(function (it) {
+          return it.id.toLowerCase().indexOf(query) !== -1 ||
+                 it.title.toLowerCase().indexOf(query) !== -1;
+        }).slice(0, 8);
+
+        activeAutocomplete = {
+          textarea: ta,
+          type: "wikilink",
+          triggerIndex: cursor - wikiMatch[0].length,
+          selectedIndex: 0,
+          items: matches,
+        };
+
+        if (popoverTip) popoverTip.textContent = "关联全库已有条目 [[" + (query || "...");
+        showPopoverNearTextarea(ta);
+        renderPopoverItems();
+        return;
+      }
+
+      // 检测受控标签 #
+      var tagMatch = textBefore.match(/(?:^|\s)#([a-z0-9_-]*)$/i);
+      if (tagMatch) {
+        var tQuery = tagMatch[1].trim().toLowerCase();
+        var tagMatches = CONTROLLED_TAGS_LIST.filter(function (tag) {
+          return tag.indexOf(tQuery) !== -1;
+        }).slice(0, 10);
+
+        activeAutocomplete = {
+          textarea: ta,
+          type: "tag",
+          triggerIndex: cursor - tagMatch[1].length - 1,
+          selectedIndex: 0,
+          items: tagMatches,
+        };
+
+        if (popoverTip) popoverTip.textContent = "选择受控分类标签 #" + (tQuery || "...");
+        showPopoverNearTextarea(ta);
+        renderPopoverItems();
+        return;
+      }
+
+      hidePopover();
+    }
+
+    function showPopoverNearTextarea(ta) {
+      if (!obsidianPopover) return;
+      var rect = ta.getBoundingClientRect();
+      var scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      var scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+      obsidianPopover.hidden = false;
+      obsidianPopover.style.top = (rect.bottom + scrollY + 4) + "px";
+      obsidianPopover.style.left = (rect.left + scrollX) + "px";
+    }
+
+    function attachTextareaObsidianHandlers(ta, saveTrigger) {
+      if (!ta) return;
+
+      ta.addEventListener("input", function () {
+        checkAutocompleteTrigger(ta);
+      });
+
+      ta.addEventListener("keydown", function (e) {
+        if (activeAutocomplete && obsidianPopover && !obsidianPopover.hidden) {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            activeAutocomplete.selectedIndex = (activeAutocomplete.selectedIndex + 1) % Math.max(1, activeAutocomplete.items.length);
+            renderPopoverItems();
+            return;
+          }
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            activeAutocomplete.selectedIndex = (activeAutocomplete.selectedIndex - 1 + activeAutocomplete.items.length) % Math.max(1, activeAutocomplete.items.length);
+            renderPopoverItems();
+            return;
+          }
+          if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
+            if (activeAutocomplete.items.length > 0) {
+              e.preventDefault();
+              selectAutocompleteItem(activeAutocomplete.selectedIndex);
+              return;
+            }
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            hidePopover();
+            return;
+          }
+        }
+
+        // 快捷键 1：Ctrl+Enter / Cmd+Enter 快速保存
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          if (typeof saveTrigger === "function") saveTrigger();
+          return;
+        }
+
+        // 快捷键 2：Tab 键插入 2 空格缩进
+        if (e.key === "Tab") {
+          e.preventDefault();
+          var start = ta.selectionStart;
+          var end = ta.selectionEnd;
+          ta.value = ta.value.substring(0, start) + "  " + ta.value.substring(end);
+          ta.selectionStart = ta.selectionEnd = start + 2;
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
+
+        // 快捷键 3：Ctrl+B 加粗
+        if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) {
+          e.preventDefault();
+          wrapSelection(ta, "**", "**", "粗体文本");
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
+
+        // 快捷键 4：Ctrl+I 斜体
+        if ((e.ctrlKey || e.metaKey) && (e.key === "i" || e.key === "I")) {
+          e.preventDefault();
+          wrapSelection(ta, "*", "*", "斜体文本");
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
+
+        // 快捷键 5：Ctrl+K 链接
+        if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+          e.preventDefault();
+          wrapSelection(ta, "[", "](url)", "链接文本");
+          ta.dispatchEvent(new Event("input", { bubbles: true }));
+          return;
+        }
+      });
+
+      ta.addEventListener("blur", function () {
+        setTimeout(hidePopover, 200);
+      });
+    }
+
+    // 绑定视图切换与工具栏
+    setupEditorModes("quick", quickEditorWrap, function () {
+      updateQuickPreviewAndCache(false);
+    });
+    setupEditorToolbar("quick", quickBody, function () {
+      updateQuickPreviewAndCache(true);
+    });
+    attachTextareaObsidianHandlers(quickBody, function () {
+      if (btnSaveInbox) btnSaveInbox.click();
+    });
+
+    setupEditorModes("struct", structEditorWrap, function () {
+      refreshStructuredPreview();
+    });
+    setupEditorToolbar("struct", stBody, function () {
+      refreshStructuredPreview();
+    });
+    attachTextareaObsidianHandlers(stBody, function () {
+      if (btnSaveStaged) btnSaveStaged.click();
+    });
+
     // 启动时恢复本地连接、快速草稿与初始预览
     loadSavedConn();
+    loadKnowledgeEntries();
     loadQuickDraft();
+    loadStructDraft();
     updateQuickPreviewAndCache(false);
     refreshStructuredPreview();
   })();
