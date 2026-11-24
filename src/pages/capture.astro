@@ -41,25 +41,29 @@ import Base from "../layouts/Base.astro";
       </div>
     </div>
     <div class="wb-banner__footer">
+      <div class="wb-tips-row" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <span class="badge badge--status-verified">✨ 最简免密提交</span>
+        <span class="wb-hint" style="color:var(--color-text);">
+          只要在手机或电脑已登录 GitHub，写完点击<strong>「🌐 网页免密直存」</strong>即可一键新建文件保存，<strong>无需配置任何 Token 令牌</strong>！
+        </span>
+      </div>
       <a
-        class="wb-btn wb-btn--secondary"
-        href="https://github.com/cvcingcvc-code/personal-knowledge-vault/issues/new?template=thought.yml"
+        class="wb-btn wb-btn--ghost"
+        href="https://github.com/cvcingcvc-code/personal-knowledge-vault/issues/new"
         target="_blank"
         rel="noopener noreferrer"
+        style="font-size:0.875rem;padding:0.35rem 0.75rem;min-height:36px;"
       >
-        手机免配置快捷入口（私有库 Issue 表单）↗
+        📱 手机 GitHub Issue 入口 ↗
       </a>
-      <span class="wb-hint">
-        已在手机登录 GitHub 时，无需在本页配置浏览器令牌即可随手提交思考。
-      </span>
     </div>
   </section>
 
-  <!-- 可折叠：私有库连接设置 -->
-  <details class="wb-card wb-settings" id="wb-settings" open>
+  <!-- 可折叠：私有库连接设置（默认折叠收起，免去打扰） -->
+  <details class="wb-card wb-settings" id="wb-settings">
     <summary class="wb-settings__summary">
-      <span class="wb-settings__title">私有库连接设置</span>
-      <span class="badge" id="conn-badge">未配置本机令牌</span>
+      <span class="wb-settings__title">⚙️ 高级设置：私有库 API 静默直连（可选）</span>
+      <span class="badge" id="conn-badge">免密直存模式</span>
     </summary>
 
     <div class="wb-settings__body">
@@ -221,11 +225,20 @@ import Base from "../layouts/Base.astro";
       </p>
 
       <div class="wb-actions">
-        <button type="button" class="wb-btn wb-btn--primary" id="btn-save-inbox">
-          存入私有库 inbox/
+        <button type="button" class="wb-btn wb-btn--primary" id="btn-save-inbox" title="有令牌则静默后台直存，无令牌则自动通过 GitHub 网页免密直存 (Ctrl+Enter)">
+          🚀 存入私有库 inbox/
         </button>
-        <button type="button" class="wb-btn wb-btn--ghost" id="btn-clear-quick">
-          清空草稿
+        <button type="button" class="wb-btn wb-btn--secondary" id="btn-web-commit-quick" title="无需任何 Token，只要在浏览器登录了 GitHub 即可一键预填建文件">
+          🌐 网页免密直存 ↗
+        </button>
+        <button type="button" class="wb-btn wb-btn--ghost" id="btn-copy-quick" title="一键复制完整带 Frontmatter 的标准笔记到剪贴板">
+          📋 复制 Markdown
+        </button>
+        <button type="button" class="wb-btn wb-btn--ghost" id="btn-download-quick" title="下载为 .md 文件放入本地知识库">
+          💾 下载 .md
+        </button>
+        <button type="button" class="wb-btn wb-btn--ghost" id="btn-clear-quick" title="清空当前输入并重置草稿">
+          清空
         </button>
       </div>
 
@@ -613,8 +626,17 @@ import Base from "../layouts/Base.astro";
 
       <!-- 提交与跨仓同步动作 -->
       <div class="wb-actions">
-        <button type="button" class="wb-btn wb-btn--primary" id="btn-save-staged">
-          存入私有库 staged/ 待同步
+        <button type="button" class="wb-btn wb-btn--primary" id="btn-save-staged" title="有令牌则静默后台直存，无令牌则自动通过 GitHub 网页免密直存 (Ctrl+Enter)">
+          🚀 存入私有库 staged/ 待同步
+        </button>
+        <button type="button" class="wb-btn wb-btn--secondary" id="btn-web-commit-struct" title="无需任何 Token，网页一键新建文件存入 staged/">
+          🌐 网页免密直存 ↗
+        </button>
+        <button type="button" class="wb-btn wb-btn--ghost" id="btn-copy-struct" title="一键复制完整脱敏 Markdown 到剪贴板">
+          📋 复制脱敏草稿
+        </button>
+        <button type="button" class="wb-btn wb-btn--ghost" id="btn-download-struct" title="下载为 .md 文件">
+          💾 下载 .md
         </button>
         <button type="button" class="wb-btn wb-btn--secondary" id="btn-dispatch-sync">
           一键触发同步 PR 至公开知识站
@@ -806,6 +828,54 @@ import Base from "../layouts/Base.astro";
           return line.replace(/^\s*[-*•]\s*/, "").trim();
         })
         .filter(Boolean);
+    }
+
+    /** 构建 GitHub 官方免密网页新建文件 URL（支持 URL 参数自动预填） */
+    function buildWebCommitUrl(repoSlug, branchName, targetPath, fileContent, commitMsg) {
+      var repo = String(repoSlug || "cvcingcvc-code/personal-knowledge-vault").trim();
+      var branch = String(branchName || "main").trim() || "main";
+      var base = "https://github.com/" + repo + "/new/" + encodeURIComponent(branch);
+      var params = [
+        "filename=" + encodeURIComponent(targetPath),
+        "value=" + encodeURIComponent(fileContent),
+        "message=" + encodeURIComponent(commitMsg || "capture: new thought")
+      ];
+      return base + "?" + params.join("&");
+    }
+
+    /** 一键复制文本到剪贴板并给出友好反馈 */
+    async function copyToClipboard(text, successMsg, alertEl) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        }
+        setAlert(alertEl, "ok", successMsg || "已成功复制到剪贴板！可直接粘贴到本地 Obsidian 或笔记软件。");
+      } catch (_e) {
+        setAlert(alertEl, "danger", "复制失败，请手动在预览区全选复制。");
+      }
+    }
+
+    /** 下载 Markdown 文件到本地知识库 */
+    function downloadMarkdownFile(filePath, content) {
+      var fileName = filePath.split("/").pop() || "thought.md";
+      var blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // ---- Obsidian 风格 Markdown 原生轻量渲染器 ----
@@ -1233,8 +1303,8 @@ import Base from "../layouts/Base.astro";
         verifiedPrivateRepo = null;
         blockedPublic = false;
         syncWriteButtonsState();
-        setBadge("未配置本机令牌", "");
-        setAlert(connStatus, "info", "已清除保存在本机浏览器中的令牌。");
+        setBadge("免密直存模式", "");
+        setAlert(connStatus, "info", "已清除保存在本机浏览器中的令牌，已恢复为默认网页免密直存模式。");
       });
     }
 
@@ -1277,6 +1347,9 @@ import Base from "../layouts/Base.astro";
     var quickDraftNote = byId("quick-draft-note");
     var quickPathPreview = byId("quick-path-preview");
     var btnClearQuick = byId("btn-clear-quick");
+    var btnWebCommitQuick = byId("btn-web-commit-quick");
+    var btnCopyQuick = byId("btn-copy-quick");
+    var btnDownloadQuick = byId("btn-download-quick");
     var quickResult = byId("quick-result");
 
     // Obsidian 增强组件引用
@@ -1412,18 +1485,6 @@ import Base from "../layouts/Base.astro";
           return;
         }
 
-        var conn = await ensureVerifiedConn();
-        if (!conn) {
-          setAlert(
-            quickResult,
-            "danger",
-            blockedPublic
-              ? "安全阻断：目标仓库不是 Private 私有仓库，已禁止写入！"
-              : "连接未就绪：请先在上方「私有库连接设置」保存并验证有效令牌。"
-          );
-          return;
-        }
-
         var now = new Date();
         var meta = computeQuickMeta(now);
         var tags = parseTags(quickTags && quickTags.value);
@@ -1443,6 +1504,32 @@ import Base from "../layouts/Base.astro";
             bodyText,
             "",
           ].join("\n");
+
+        var rawToken = String((cfgToken && cfgToken.value) || "").trim();
+        // 未配置令牌时：智能降级为「网页免密直存」，自动在 GitHub 官方页面预填新建文件
+        if (!rawToken) {
+          var repoSlug = (cfgRepo && cfgRepo.value) || "cvcingcvc-code/personal-knowledge-vault";
+          var branchName = (cfgBranch && cfgBranch.value) || "main";
+          var webUrl = buildWebCommitUrl(repoSlug, branchName, meta.path, md, "capture(inbox): " + meta.title);
+          window.open(webUrl, "_blank", "noopener,noreferrer");
+          setAlert(quickResult, "ok", "未配置本机令牌，已为您通过 GitHub 网页免密直存打开！", {
+            url: webUrl,
+            label: "在新标签页点击绿色【Commit changes...】即可永久保存 ↗",
+          });
+          return;
+        }
+
+        var conn = await ensureVerifiedConn();
+        if (!conn) {
+          setAlert(
+            quickResult,
+            "danger",
+            blockedPublic
+              ? "安全阻断：目标仓库不是 Private 私有仓库，已禁止写入！"
+              : "连接未就绪：请先在上方「私有库连接设置」保存并验证有效令牌。"
+          );
+          return;
+        }
 
         btnSaveInbox.disabled = true;
         setAlert(quickResult, "info", "正在加密传输并写入私有库 " + meta.path + " …");
@@ -1504,6 +1591,98 @@ import Base from "../layouts/Base.astro";
         } finally {
           syncWriteButtonsState();
         }
+      });
+    }
+
+    // 网页免密直存（无需 Token）
+    if (btnWebCommitQuick) {
+      btnWebCommitQuick.addEventListener("click", function () {
+        var bodyText = String((quickBody && quickBody.value) || "").trim();
+        if (!bodyText) {
+          setAlert(quickResult, "danger", "思考正文不能为空，请先输入内容。");
+          if (quickBody) quickBody.focus();
+          return;
+        }
+        var now = new Date();
+        var meta = computeQuickMeta(now);
+        var tags = parseTags(quickTags && quickTags.value);
+        var tagsYaml = tags.length === 0 ? "[]" : "[" + tags.map(yamlStr).join(", ") + "]";
+        var md = [
+          "---",
+          "title: " + yamlStr(meta.title),
+          "captured_at: " + yamlStr(localOffsetISO(now)),
+          "tags: " + tagsYaml,
+          "privacy_level: L3",
+          "---",
+          "",
+          bodyText,
+          "",
+        ].join("\n");
+        var repoSlug = (cfgRepo && cfgRepo.value) || "cvcingcvc-code/personal-knowledge-vault";
+        var branchName = (cfgBranch && cfgBranch.value) || "main";
+        var webUrl = buildWebCommitUrl(repoSlug, branchName, meta.path, md, "capture(inbox): " + meta.title);
+        window.open(webUrl, "_blank", "noopener,noreferrer");
+        setAlert(quickResult, "ok", "已在 GitHub 网页新建文件页面预填就绪：", {
+          url: webUrl,
+          label: "在新标签页点击绿色【Commit changes...】即可永久保存 ↗",
+        });
+      });
+    }
+
+    // 一键复制 Markdown
+    if (btnCopyQuick) {
+      btnCopyQuick.addEventListener("click", function () {
+        var bodyText = String((quickBody && quickBody.value) || "").trim();
+        if (!bodyText) {
+          setAlert(quickResult, "danger", "思考正文为空，请输入内容后再复制。");
+          if (quickBody) quickBody.focus();
+          return;
+        }
+        var now = new Date();
+        var meta = computeQuickMeta(now);
+        var tags = parseTags(quickTags && quickTags.value);
+        var tagsYaml = tags.length === 0 ? "[]" : "[" + tags.map(yamlStr).join(", ") + "]";
+        var md = [
+          "---",
+          "title: " + yamlStr(meta.title),
+          "captured_at: " + yamlStr(localOffsetISO(now)),
+          "tags: " + tagsYaml,
+          "privacy_level: L3",
+          "---",
+          "",
+          bodyText,
+          "",
+        ].join("\n");
+        copyToClipboard(md, "已成功复制当前思考完整 Markdown！可直接粘贴到本地 Obsidian / 微信 / 备忘录中。", quickResult);
+      });
+    }
+
+    // 下载 .md 文件
+    if (btnDownloadQuick) {
+      btnDownloadQuick.addEventListener("click", function () {
+        var bodyText = String((quickBody && quickBody.value) || "").trim();
+        if (!bodyText) {
+          setAlert(quickResult, "danger", "思考正文为空，请输入内容后再下载。");
+          if (quickBody) quickBody.focus();
+          return;
+        }
+        var now = new Date();
+        var meta = computeQuickMeta(now);
+        var tags = parseTags(quickTags && quickTags.value);
+        var tagsYaml = tags.length === 0 ? "[]" : "[" + tags.map(yamlStr).join(", ") + "]";
+        var md = [
+          "---",
+          "title: " + yamlStr(meta.title),
+          "captured_at: " + yamlStr(localOffsetISO(now)),
+          "tags: " + tagsYaml,
+          "privacy_level: L3",
+          "---",
+          "",
+          bodyText,
+          "",
+        ].join("\n");
+        downloadMarkdownFile(meta.path, md);
+        setAlert(quickResult, "ok", "已成功下载 Markdown 文件：" + meta.path.split("/").pop() + "，可直接放入本地 Obsidian 库。");
       });
     }
 
@@ -1968,6 +2147,20 @@ import Base from "../layouts/Base.astro";
           return;
         }
 
+        var rawToken = String((cfgToken && cfgToken.value) || "").trim();
+        // 未配置令牌时：智能降级为「网页免密直存」，自动在 GitHub 官方页面预填新建文件
+        if (!rawToken) {
+          var repoSlug = (cfgRepo && cfgRepo.value) || "cvcingcvc-code/personal-knowledge-vault";
+          var branchName = (cfgBranch && cfgBranch.value) || "main";
+          var webUrl = buildWebCommitUrl(repoSlug, branchName, art.path, art.markdown, "stage(" + ((stType && stType.value) || "content") + "): " + art.filename);
+          window.open(webUrl, "_blank", "noopener,noreferrer");
+          setAlert(structResult, "ok", "未配置本机令牌，已为您通过 GitHub 网页免密直存打开！", {
+            url: webUrl,
+            label: "在新标签页点击绿色【Commit changes...】即可永久保存 ↗",
+          });
+          return;
+        }
+
         var conn = await ensureVerifiedConn();
         if (!conn) {
           setAlert(
@@ -2056,6 +2249,48 @@ import Base from "../layouts/Base.astro";
         } finally {
           syncWriteButtonsState();
         }
+      });
+    }
+
+    // 结构化沉淀免密直存、复制与下载按钮
+    var btnWebCommitStruct = byId("btn-web-commit-struct");
+    var btnCopyStruct = byId("btn-copy-struct");
+    var btnDownloadStruct = byId("btn-download-struct");
+
+    if (btnWebCommitStruct) {
+      btnWebCommitStruct.addEventListener("click", function () {
+        var art = refreshStructuredPreview();
+        if (art.v010Hits.length > 0) {
+          setAlert(
+            structResult,
+            "danger",
+            "V-010 拦截生效：内容仍含敏感信息（" + art.v010Hits.join("、") + "），禁止放入 staged/。"
+          );
+          return;
+        }
+        var repoSlug = (cfgRepo && cfgRepo.value) || "cvcingcvc-code/personal-knowledge-vault";
+        var branchName = (cfgBranch && cfgBranch.value) || "main";
+        var webUrl = buildWebCommitUrl(repoSlug, branchName, art.path, art.markdown, "stage(" + ((stType && stType.value) || "content") + "): " + art.filename);
+        window.open(webUrl, "_blank", "noopener,noreferrer");
+        setAlert(structResult, "ok", "已在 GitHub 网页新建文件页面预填就绪：", {
+          url: webUrl,
+          label: "在新标签页点击绿色【Commit changes...】即可永久保存 ↗",
+        });
+      });
+    }
+
+    if (btnCopyStruct) {
+      btnCopyStruct.addEventListener("click", function () {
+        var art = refreshStructuredPreview();
+        copyToClipboard(art.markdown, "已成功复制脱敏草稿 Markdown！可直接粘贴到本地 Obsidian 或直接复用。", structResult);
+      });
+    }
+
+    if (btnDownloadStruct) {
+      btnDownloadStruct.addEventListener("click", function () {
+        var art = refreshStructuredPreview();
+        downloadMarkdownFile(art.path, art.markdown);
+        setAlert(structResult, "ok", "已触发下载文件：" + art.filename + "，可直接移动至本地知识库。");
       });
     }
 
