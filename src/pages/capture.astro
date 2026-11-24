@@ -818,6 +818,28 @@ import Base from "../layouts/Base.astro";
         .replace(/'/g, "&#39;");
     }
 
+    /** 安全净化 URL：防止属性引号逃逸与 javascript: / data: / vbscript: 伪协议注入 */
+    function sanitizeUrl(rawUrl) {
+      if (!rawUrl) return "#";
+      var str = String(rawUrl).trim();
+      // 还原实体（防 &quot; / &#39; / &amp; 逃逸）以探测真实字符
+      var unescaped = str
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&amp;/g, "&");
+      // 严厉拦截包含引号、控制字符、尖括号、空白或危险伪协议的非法 URL
+      if (/["'<>\s\u0000-\u001f]/.test(unescaped)) {
+        return "#";
+      }
+      // 严格协议白名单：只允许 http://, https://, /, #, mailto:
+      if (/^(?:https?:\/\/|\/|#|mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+)/i.test(unescaped)) {
+        return unescaped;
+      }
+      return "#";
+    }
+
     function renderMarkdown(src) {
       if (!src || !src.trim()) {
         return '<p class="wb-hint" style="font-style:italic;">暂无内容，在左侧输入以实时预览……</p>';
@@ -854,11 +876,10 @@ import Base from "../layouts/Base.astro";
         escaped = escaped.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
         // 5. 斜体 *italic*
         escaped = escaped.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-        // 6. 链接 [text](url)
+        // 6. 链接 [text](url) — 经严格协议白名单与引号逃逸防御
         escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, url) {
-          var safeUrl = url.trim();
-          if (/^(javascript:|data:)/i.test(safeUrl)) safeUrl = "#";
-          return '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer">' + label + "</a>";
+          var safeUrl = sanitizeUrl(url);
+          return '<a href="' + escapeHtml(safeUrl) + '" target="_blank" rel="noopener noreferrer">' + label + "</a>";
         });
         return escaped;
       }
@@ -2246,7 +2267,15 @@ import Base from "../layouts/Base.astro";
           titleDiv.textContent = item.title;
           var metaDiv = document.createElement("div");
           metaDiv.className = "obsidian-popover__meta";
-          metaDiv.innerHTML = "<span>" + item.id + "</span><span>·</span><span>" + item.type + "</span>";
+          var idSpan = document.createElement("span");
+          idSpan.textContent = String(item.id || "");
+          var dotSpan = document.createElement("span");
+          dotSpan.textContent = " · ";
+          var typeSpan = document.createElement("span");
+          typeSpan.textContent = String(item.type || "");
+          metaDiv.appendChild(idSpan);
+          metaDiv.appendChild(dotSpan);
+          metaDiv.appendChild(typeSpan);
           li.appendChild(titleDiv);
           li.appendChild(metaDiv);
         } else {
