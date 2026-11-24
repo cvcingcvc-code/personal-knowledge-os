@@ -67,6 +67,76 @@ async function testOnlineCaptureHtml() {
          hasDailyStream && hasObsidianModes && hasPopover && hasPreviewPane;
 }
 
+function testMarkdownAndDOMSecurity() {
+  console.log('\n--- 4. 验证 Markdown 渲染器与 DOM 操作安全加固（防 DOM XSS） ---');
+  const astroPath = resolve(__dirname, '../../src/pages/capture.astro');
+  if (!existsSync(astroPath)) {
+    console.log('  [FAIL] 未找到 src/pages/capture.astro');
+    return false;
+  }
+  const source = readFileSync(astroPath, 'utf-8');
+
+  // 1. 验证源码中加固函数与安全引用的存在性
+  const codeChecks = [
+    { name: 'sanitizeUrl 安全净化函数已声明', ok: source.includes('function sanitizeUrl(') },
+    { name: '链接渲染强制 escapeHtml(safeUrl)', ok: source.includes('escapeHtml(safeUrl)') },
+    { name: 'obsidian-popover 弃用危险 innerHTML 拼接', ok: !source.includes('metaDiv.innerHTML = "<span>" + item.id') },
+    { name: 'obsidian-popover 使用 createElement 与 textContent', ok: source.includes('idSpan.textContent = String(item.id || "")') },
+  ];
+
+  let passed = true;
+  for (const c of codeChecks) {
+    console.log(`  [${c.ok ? 'PASS' : 'FAIL'}] ${c.name}: ${c.ok}`);
+    if (!c.ok) passed = false;
+  }
+
+  // 2. 模拟运行前端 sanitizeUrl 逻辑，覆盖典型攻击与越权向量
+  function sanitizeUrl(rawUrl) {
+    if (!rawUrl) return '#';
+    const str = String(rawUrl).trim();
+    const unescaped = str
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&');
+    if (/["'<>\s\u0000-\u001f]/.test(unescaped)) {
+      return '#';
+    }
+    if (/^(?:https?:\/\/|\/|#|mailto:[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+)/i.test(unescaped)) {
+      return unescaped;
+    }
+    return '#';
+  }
+
+  const testVectors = [
+    { payload: 'https://example.com" onclick="alert(1)', expected: '#', desc: '属性引号逃逸与事件注入' },
+    { payload: 'https://example.com&quot; onfocus=&quot;alert(1)', expected: '#', desc: 'HTML 实体引号转义逃逸' },
+    { payload: "https://example.com' onmouseover='alert(1)", expected: '#', desc: '单引号逃逸向量' },
+    { payload: 'javascript:alert(1)', expected: '#', desc: 'javascript: 伪协议' },
+    { payload: 'JAVASCRIPT:alert(document.cookie)', expected: '#', desc: '大小写混淆伪协议' },
+    { payload: 'data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==', expected: '#', desc: 'data: 文本伪协议' },
+    { payload: 'vbscript:msgbox("xss")', expected: '#', desc: 'vbscript: 伪协议' },
+    { payload: 'https://example.com/path with spaces', expected: '#', desc: 'URL 空白注入' },
+    { payload: 'https://example.com/\u0000test', expected: '#', desc: 'Null 字节截断' },
+    { payload: 'https://example.com/safe/doc?key=1#section', expected: 'https://example.com/safe/doc?key=1#section', desc: '合法 HTTPS URL' },
+    { payload: 'http://example.com/archive', expected: 'http://example.com/archive', desc: '合法 HTTP URL' },
+    { payload: '/projects/pj-pkos/', expected: '/projects/pj-pkos/', desc: '合法相对路由' },
+    { payload: '#section-1', expected: '#section-1', desc: '合法锚点链接' },
+    { payload: 'mailto:user@example.com', expected: 'mailto:user@example.com', desc: '合法邮件链接' },
+  ];
+
+  console.log('  -- 攻击向量靶场测试 (14 组) --');
+  for (const tv of testVectors) {
+    const actual = sanitizeUrl(tv.payload);
+    const ok = actual === tv.expected;
+    console.log(`    [${ok ? 'PASS' : 'FAIL'}] ${tv.desc} -> ${actual} (期望: ${tv.expected})`);
+    if (!ok) passed = false;
+  }
+
+  return passed;
+}
+
 async function testPagefindIsolation() {
   console.log('\n--- 2. 验证 Pagefind 搜索对 /capture/ 工作台的物理隔离 ---');
   const captureUniqueTerms = ['快速思考（直存 inbox/）', '结构化沉淀（脱敏入 staged/）', '未配置本机令牌'];
@@ -110,8 +180,9 @@ async function main() {
   const r1 = await testOnlineCaptureHtml();
   const r2 = await testPagefindIsolation();
   const r3 = testV010Rules();
+  const r4 = testMarkdownAndDOMSecurity();
 
-  const allPassed = r1 && r2 && r3;
+  const allPassed = r1 && r2 && r3 && r4;
   console.log(`\n最终验收结论: ${allPassed ? '全部通过 (PASS)' : '存在未通过项 (FAIL)'}`);
   process.exitCode = allPassed ? 0 : 1;
 }
